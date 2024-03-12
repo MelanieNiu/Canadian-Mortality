@@ -14,10 +14,9 @@ library(tidyverse)
 #### Download data ####
 raw_data <- 
   read.csv(
-    file = "https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1310080101&latestN=5&startDate=&endDate=&csvLocale=en&selectedMembers=%5B%5B%5D%2C%5B1%5D%2C%5B%5D%2C%5B1%2C2%5D%5D&checkedLevels=0D1%2C0D2%2C2D1%2C2D2")
-
+    file = "https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1310039401&latestN=0&startDate=20010101&endDate=20220101&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B1%5D%2C%5B1%5D%2C%5B%5D%2C%5B1%2C2%5D%5D&checkedLevels=3D1%2C3D2")
 
 #### Save data from the Statistics Canada website  ####
-write_csv(raw_data, "data/raw_data.csv") 
+write_csv(raw_data, "inputs/data/raw_data.csv") 
 
          
