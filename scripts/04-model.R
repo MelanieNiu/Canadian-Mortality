@@ -11,25 +11,43 @@ library(tidyverse)
 library(rstanarm)
 
 #### Read data ####
-analysis_data <- read_csv("outputs/data/cleaned_data.csv")
+analysis_data <- cleaned_data |>
+  filter(Cause %in% canada_top_five)
 
 ### Model data ####
-first_model <-
+
+#Poisson Model
+canada_death_poisson <-
   stan_glm(
-    formula = flying_time ~ length + width,
+    Death ~ Cause,
     data = analysis_data,
-    family = gaussian(),
-    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    family = poisson(link = "log"),
     seed = 853
   )
 
+#N binomial Model
+canada_death_negbinomial <-
+  stan_glm(
+    Death ~ Cause,
+    data = analysis_data,
+    family = neg_binomial_2(link = "log"),
+    seed = 853
+  )
 
 #### Save model ####
-saveRDS(
-  first_model,
-  file = "models/first_model.rds"
-)
+
+saveRDS(canada_death_poisson, "outputs/models/canada_death_poisson.rds")
+saveRDS(canada_death_negbinomial, "outputs/models/canada_death_negbinomial.rds")
+
+
+# For the Poisson model
+poisson_terms <- names(coef(canada_death_poisson))
+
+# For the Negative Binomial model
+negbin_terms <- names(coef(canada_death_negbinomial))
+
+# Printing out the terms
+print(poisson_terms)
+print(negbin_terms)
 
 

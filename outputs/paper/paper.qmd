@@ -20,6 +20,8 @@ bibliography: references.bib
 
 library(tidyverse)
 library(knitr)
+library(rstanarm)
+library(modelsummary)
 
 ```
 
@@ -37,72 +39,147 @@ The remainder of this paper is structured as follows. @sec-data....
 Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 
 ```{r}
-#| label: Table 1
+#| label: Tbl-1
 #| fig-cap: Top-ten causes of death in Canada in 2022
 #| echo: false
 
-combined_data %>%
-  filter(Year == 2021, Ranking <= 10) %>%
-  mutate(Number_of_Death = format(Number_of_Death, big.mark = ",")) %>%
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
+
+transformed_data <- cleaned_data %>%
+  add_count(Cause) %>%
+  filter(Year == 2022, Ranking <= 10) %>%
+  arrange(Ranking) %>%
+  mutate(Death = format(Death, big.mark = ","))
+
+transformed_data %>%
   kable(
-    col.names = c("Year", "Leading_Cause_Death", "Ranking", "Number_of_Death"),
-    align = c("l", "r", "r", "r"),
+    col.names = c("Year", "Cause", "Death", "Ranking", "Counts"),
+    align = c("l", "r", "r", "r", "r"),
     digits = 0, booktabs = TRUE, linesep = ""
   )
+
+
 ```
 
 Talk more about it.
 
+```{r}
+#| label: Tbl-2
+#| fig-cap: Summary Statistics of the number of yearly deaths, by cause, in Canada
+#| echo: false
+
+
+```
+
+
+
 And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
 
 ```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
+#| label: Fig-1
+#| fig-cap: Annual number of deaths for the top-five causes in 2021, since 2001, for Canada
 #| echo: false
 #| warning: false
 #| message: false
 
-analysis_data <- read_csv(here::here("data/analysis_data/analysis_data.csv"))
+canada_top_five <-
+  transformed_data |>
+  filter(
+    Year == 2022, 
+    n == 22
+  ) |>
+  slice_max(order_by = desc(Ranking), n = 5) |>
+  pull(Cause)
 
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
+filtered_data <- cleaned_data |>
+  filter(Cause %in% canada_top_five) 
+
+filtered_data |>
+  ggplot(aes(x = Year, y = Death, color = Cause)) +
+  geom_line() +
   theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
+  labs(x = "Year", y = "Annual number of deaths in Canada") +
+  facet_wrap(vars(Cause), dir = "v", ncol = 1) +
+  theme(legend.position = "none")
+
 ```
 
 Talk way more about it. 
+```{r}
+#| label: tbl-2
+#| fig-cap: Summary statistics of the number of yearly deaths, by cause, in Alberta, Canada
+#| echo: false
+#| warning: false
+#| message: false
+
+```
+
+```{r}
+#| label: tbl-3
+#| fig-cap: Modeling the most prevalent cause of deaths in Canada, 2001-2022
+#| echo: false
+#| warning: false
+#| message: false
 
 
+canada_death_poisson <- readRDS("../models/first_model.rds")
+canada_death_negbinomial <- readRDS("../models/first_model.rds")
 
+coef_short_names <- 
+  c("(Intercept)" = "(Intercept)",
+    "CauseCerebrovascular diseases " = "Cerebrovascular diseases",
+    "CauseChronic lower respiratory diseases " = "Chronic lower respiratory diseases",
+    "CauseDiseases of heart " = "Diseases of heart",
+    "CauseMalignant neoplasms " = "Malignant neoplasms"
+  )
+
+
+modelsummary(
+  list(
+    "Poisson" = canada_death_poisson,
+    "Negative binomial" = canada_death_negbinomial
+  ),
+  coef_map = coef_short_names,
+  statistic = "std.error"
+)
+```
 # Model
 
-The goal of our modelling strategy is twofold. Firstly,...
+The goal of our modelling strategy is twofold. 
+Firstly,...
+we would like to model the mortality in Canada. 
 
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
+Here we briefly describe the Bayesian analysis model used to investigate... 
+
+We model the incidences of death by one of the leading cause of deaths using a Poisson regression model and a negative Binomial regression model. Background details and diagnostics are included in [Appendix -@sec-model-details].
 
 ## Model set-up
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
+In our Poisson model, define $y_i$ as the number of deaths in a year due to a leading cause of death. Then $\lambda_i$ is the average rate of deaths due to this cause per year. $\lambda_i$ is linked to the predictor $x_i$ for the $i$th observation by a log link function where $\beta_0$ is the intercept and $\beta_1$ is the coefficient. We specifiy prior distributions for the parameters $\beta_0$ and $\beta_1$ in Bayesian analysis. We choose $\beta_0$ and $\beta_1$ to follow a normal distribution with mean 0 and conservative standard deviation of 2.5. 
 
 \begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
+y_i&\sim \text{Poisson}(\lambda_i) \quad \text{(1)} \\
+\text{log}(\lambda_i) &= \beta_0 + \beta_1 X_i \quad \text{(2)} \\
+\beta_0 &\sim \text{Normal}(0, 2.5) \quad \text{(3)} \\
+\beta_1 &\sim \text{Normal}(0, 2.5) \quad \text{(4)} \\
 \end{align}
 
 We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
 
+In our negative binomial model, similarly define $y_i$ as the number of deaths due to a leading cause of death in a year. Then $\mu_i$ is the average count of deaths in a year. $\mu_i$ is linked to the predictor cause of death $x_i$ by a log link function with the intercept $\beta_0$ and the coefficient $\beta_i$. $\phi_i$ is the dispersion of the distribution measuring the extent of deviation from the count expected under a Poisson distribution. We specifiy the prior distributions for $\beta_0$ and $\beta_1$ to follow a normal distribution with mean 0 and conservative standard deviation of 2.5. We specify the prior of $\phi_i$ to follow a gamma distribution.
+
+\begin{align} 
+y_i&\sim \text{NegativeBinomial}(\mu, \phi) \quad \text{(1)} \\
+\text{log}(\mu_i) &= \beta_0 + \beta_1 X_i \quad \text{(2)} \\
+\beta_0 &\sim \text{Normal}(0, 2.5) \quad \text{(3)} \\
+\beta_1 &\sim \text{Normal}(0, 2.5) \quad \text{(4)} \\
+\phi &\sim \text{Gamma}(2, 0.1) \quad \text{5} \\
+\end{align}
 
 ### Model justification
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
+Since the residual of the number of deaths by a leading cause in a year does not follow a normal distribution, we consider using a generalized linear regression model. Since mortality occurrences are discrete events, we consider the Poisson regression model and its variant, negative binomial regression model, both of which relate explanatory variables to dependent variables representing counts of events (Reference: Poisson for aggregate data). Table 2 shows that the mean and variance are not the same. This indicates dispersion in the data, therefore negative binomial regression model may be more suitable. 
 
 
 # Results
@@ -136,7 +213,6 @@ modelsummary::modelsummary(
   fmt = 2
 )
 ```
-
 
 
 
