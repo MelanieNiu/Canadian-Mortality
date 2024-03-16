@@ -13,6 +13,7 @@ library(dplyr)
 
 ### Clean the data ###
 raw_data <- read.csv("inputs/data/raw_data.csv")
+dim(raw_data)
 
 # # Select the columns of interest
 col_name <- names(raw_data)

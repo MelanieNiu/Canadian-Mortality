@@ -26,15 +26,15 @@ library(modelsummary)
 ```
 
 
-# Introduction
-
-You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
+# Introduction 
 
 
 
 The remainder of this paper is structured as follows. In @sec-data, we showed the data and methodology utilized in this study. @sec-model discusses the model used to analyze the data
 
 # Data {#sec-data}
+
+R [@citeR] was the language and environment used for the bulk of this analysis, alongside the tidyverse [@thereferencecanbewhatever], knitr[@knitr] , ggplot2[@Wickham2016ggplot2] have been used in data cleaning and visualization. 
 
 
 ```{r}
@@ -61,19 +61,6 @@ transformed_data %>%
 
 ```
 
-Talk more about it.
-
-```{r}
-#| label: Tbl-2
-#| fig-cap: Summary Statistics of the number of yearly deaths, by cause, in Canada
-#| echo: false
-
-
-```
-
-
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
 
 ```{r}
 #| label: Fig-1
@@ -104,15 +91,17 @@ analysis_data |>
 
 ```
 
-Talk way more about it. 
 ```{r}
-#| label: tbl-2
-#| fig-cap: Summary statistics of the number of yearly deaths, by cause, in Alberta, Canada
+#| label: Tbl-2
+#| fig-cap: Summary Statistics of the number of yearly deaths, by cause, in Canada
 #| echo: false
-#| warning: false
-#| message: false
 
+datasummary(Death ~ Min + Mean + Max + SD + Var + N,
+            fmt = 0,
+            data = analysis_data)
 ```
+@tbl-2 shows that the mean, 32,603, is different to the variance 673,243,267. 
+
 
 ```{r}
 #| label: tbl-3
@@ -152,6 +141,8 @@ we would like to model the mortality in Canada.
 Here we briefly describe the Bayesian analysis model used to investigate... 
 
 We model the incidences of death by one of the leading cause of deaths using a Poisson regression model and a negative Binomial regression model. Background details and diagnostics are included in [Appendix -@sec-model-details].
+
+R packages rstanarm[@rstanarm] and modelsummary [@model] are used to build and analyze the models.
 
 ## Model set-up
 
@@ -197,32 +188,24 @@ first_model <-
   readRDS(file = here::here("models/first_model.rds"))
 ```
 
-```{r}
-#| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
 
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
-  statistic = "mad",
-  fmt = 2
-)
-```
 Table X presents the coefficients for various causes from both the Poisson and the Negative Binomial regression models.
 The intercept represents the baseline of the model, in this case, Accidents (unintentional injuries). It shows the log count of deaths when all other causes of death are at this reference level, i.e. when no one other specific cause is considered.
 
 The coefficients for specific causes such as cerebrovascular diseases, chronic lower respiratory diseases, diseases of heart, and malignant neoplasms reflect the log-relative difference in the count of deaths relative to the reference level. Since we used a log link function, the coefficients represent effects on the log scale. Positive coefficients therefore indicate positive association between the cause and the number of deaths.
 
-Table shows that among the top five leading causes of death in Canada, diseases of the heart with a coefficient of 1.454 and malignant neoplasms with a coefficient of approximately 1.805 significantly indicates a strong positive association in both models. The coefficient for Diseases of heart is 1.454 in both the Poisson model and the negative binomial model. Exponentiating the coefficient to obtain exp(1.454) = 4.3 suggests that the expected count of deaths due to Diseases of the heart is about 3 times higher than the baseline category Accidents (unintentional injuries). Similarly exponentiating the coefficient for malignant neoplasms to obtain exp(1.805) shows the expected count of deaths is more than 5 times higher Accidents (unintentional injuries). Conversely, chronic lower respiratory diseases are associated with a slight decrease in mortality compared to Accidents (unintentional injuries) with a coefficient of -0.070 in the Poisson model, although the impact is modest about 7% less. 
-Both the Poisson model and the negative binomial model yielded similar coefficients. 
+Table shows that among the top five leading causes of death in Canada, diseases of the heart with a coefficient of 1.454 and malignant neoplasms with a coefficient of approximately 1.805 significantly indicates a strong positive association in both models. The coefficient for Diseases of heart is 1.454 in both the Poisson model and the negative binomial model. Exponentiating the coefficient 1.454 to obtain `r round(exp(1.454),2)` suggests that the expected count of deaths due to Diseases of the heart is about `r round(exp(1.454) - 1,2)` times higher than the baseline category Accidents (unintentional injuries). Similarly, exponentiating the coefficient for malignant neoplasms to obtain `r round(exp(1.805),2)` shows the expected count of deaths is `r round(exp(1.805)-1, 2)` times higher Accidents (unintentional injuries). Conversely, chronic lower respiratory diseases are associated with a slight decrease in mortality compared to Accidents (unintentional injuries) with a coefficient of -0.070 in the Poisson model, although the impact is modest about `r round(1-exp(-0.070),2)` less. Both the Poisson model and the negative binomial model yielded similar coefficients. 
 
-This similarity suggests that both models are capturing similar relationship between the causes and the number of deaths. Comparing the Log Likelihood, The Negative Binomial model has a much higher (less negative) value (-1050.577) than the Poisson model (-16957.794). A higher log likelihood indicates a better model fit thus our analysis suggests the Negative Binomial model fits the data better. The other measures ELPD, LOOIC WAIC and RMSE all suggest that the negative binomial model fits the data better. (Appendix B)
+This similarity suggests that both models are capturing similar relationship between the causes and the number of deaths. Comparing the Log Likelihood, The Negative Binomial model has a much higher (less negative) value -1050.577 than the Poisson model -16957.794. A higher log likelihood indicates a better model fit thus our analysis suggests the Negative Binomial model fits the data better. The other measures ELPD, LOOIC WAIC and RMSE all suggest that the negative binomial model fits the data better @sec-model-details
 
+```{r}
 
+poisson <- kfold(canada_death_poisson, k = 10)
+neg_binomial <- kfold(canada_death_negbinomial, k = 10)
+
+loo_compare(poisson, neg_binomial)
+
+```
 # Discussion
 
 ## First discussion point {#sec-first-point}
@@ -243,16 +226,29 @@ Weaknesses and next steps should also be included.
 
 # Appendix {-}
 
+# Additional data details {#sec-data-details}
 
-# Additional data details
+```{r}
+#| label: tbl-5
+#| fig-cap: A sample of the cleaned dataset, 2001-2022
+#| echo: false
+#| warning: false
+#| message: false
+sampled_data <- sample_n(cleaned_data, 5) %>%
+  kable()
+sampled_data
+```
+
+
 
 # Model details {#sec-model-details}
 
 ## Posterior predictive check
 
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
+In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check for the Poisson regression model described in @sec-4. This shows predictions generated from the posterior distribution of the model parameters (represented by the light blue lines) align reasonably well with the actual data (represented by the dark blue line) with minor misalignment. This suggests the model represent the data well.
 
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
+In @fig-ppcheckandposteriorvsprior-2 we implement a posterior predictive check for the negative binomial regression model described in @sec-4. This shows predictions generated from the posterior distribution of the model parameters (represented by the light blue lines) align generally well with the actual data (represented by the dark blue line). This suggests the model represents the data well. 
+
 
 ```{r}
 #| eval: true
@@ -261,42 +257,72 @@ In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. Th
 #| warning: false
 #| label: fig-ppcheckandposteriorvsprior
 #| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
+#| fig-cap: "Comparing posterior prediction checks for Poisson and negative binomial models"
+#| fig-subcap: ["Poisson model", "Negative binomial model"]
 
-pp_check(first_model) +
-  theme_classic() +
+pp_check(canada_death_poisson) +
   theme(legend.position = "bottom")
 
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
+pp_check(canada_death_negbinomial) +
+  theme(legend.position = "bottom")
 ```
 
+
 ## Diagnostics
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-ppcheckandposteriorvsprior
+#| layout-ncol: 2
+#| fig-cap: "Comparing posterior prediction checks for Poisson and negative binomial models"
+#| fig-subcap: ["Poisson model", "Negative binomial model"]
 
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
+pp_check(canada_death_poisson) +
+  theme(legend.position = "bottom")
 
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
+pp_check(canada_death_negbinomial) +
+  theme(legend.position = "bottom")
+```
+
+@fig-stanareyouokay-1 is a trace plot for the Poisson regression model. It shows a horizontal, dense band of samples without any systematic patterns, drifts, or long periods of stagnation. This pattern suggests that the chain is mixing well and sampling efficiently from the posterior distribution. This suggests the Poisson regression model is suitable.
+
+@fig-stanareyouokay-2 is a Rhat plot. It shows an Rhat value close to 1.  This suggests that the chains have converged to the target distribution. 
 
 ```{r}
 #| echo: false
 #| eval: true
 #| message: false
 #| warning: false
-#| label: fig-stanareyouokay
+#| label: fig-stanareyouokay-a
 #| fig-cap: "Checking the convergence of the MCMC algorithm"
 #| fig-subcap: ["Trace plot", "Rhat plot"]
 #| layout-ncol: 2
 
-plot(first_model, "trace")
+plot(canada_death_poisson, "trace")
+plot(canada_death_poisson, "rhat")
 
-plot(first_model, "rhat")
 ```
 
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-stanareyouokay-b
+#| fig-cap: "Checking the convergence of the MCMC algorithm"
+#| fig-subcap: ["Trace plot", "Rhat plot"]
+#| layout-ncol: 2
 
+
+plot(canada_death_negbinomial, "trace")
+plot(canada_death_negbinomial, "rhat")
+```
+
+@fig-stanareyouokay-b-1 is a trace plot for the negative binomial regression model. It also shows a horizontal, dense band of samples without abnormalities suggesting the chain is mixing well and sampling efficiently from the posterior distribution. This suggests the negative binomial model is suitable.
+
+@fig-stanareyouokay-b-2 is a Rhat plot for the negative binomial regression model. It shows an Rhat value close to 1.  This again suggests that the chains have converged to the target distribution in the negative regression model.
 
 \newpage
 
