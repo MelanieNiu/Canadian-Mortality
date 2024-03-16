@@ -30,13 +30,12 @@ library(modelsummary)
 
 You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
 
-The remainder of this paper is structured as follows. @sec-data....
 
 
+The remainder of this paper is structured as follows. In @sec-data, we showed the data and methodology utilized in this study. @sec-model discusses the model used to analyze the data
 
 # Data {#sec-data}
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 
 ```{r}
 #| label: Tbl-1
@@ -45,10 +44,10 @@ Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 
 cleaned_data <- read.csv("../data/cleaned_data.csv")
 
-
 transformed_data <- cleaned_data %>%
+  filter(Ranking <= 10) %>%
   add_count(Cause) %>%
-  filter(Year == 2022, Ranking <= 10) %>%
+  filter(Year == 2021) %>%
   arrange(Ranking) %>%
   mutate(Death = format(Death, big.mark = ","))
 
@@ -92,10 +91,10 @@ canada_top_five <-
   slice_max(order_by = desc(Ranking), n = 5) |>
   pull(Cause)
 
-filtered_data <- cleaned_data |>
+analysis_data <- cleaned_data |>
   filter(Cause %in% canada_top_five) 
 
-filtered_data |>
+analysis_data |>
   ggplot(aes(x = Year, y = Death, color = Cause)) +
   geom_line() +
   theme_minimal() +
@@ -122,17 +121,16 @@ Talk way more about it.
 #| warning: false
 #| message: false
 
+canada_death_poisson <- readRDS("../models/canada_death_poisson.rds")
+canada_death_negbinomial <- readRDS("../models/canada_death_negbinomial.rds")
 
-canada_death_poisson <- readRDS("../models/first_model.rds")
-canada_death_negbinomial <- readRDS("../models/first_model.rds")
-
-coef_short_names <- 
-  c("(Intercept)" = "(Intercept)",
-    "CauseCerebrovascular diseases " = "Cerebrovascular diseases",
-    "CauseChronic lower respiratory diseases " = "Chronic lower respiratory diseases",
-    "CauseDiseases of heart " = "Diseases of heart",
-    "CauseMalignant neoplasms " = "Malignant neoplasms"
-  )
+coef_short_names <- c(
+  "(Intercept)" = "(Intercept)",
+  "CauseCerebrovascular diseases " = "Cerebrovascular diseases",
+  "CauseChronic lower respiratory diseases " = "Chronic lower respiratory diseases",
+  "CauseDiseases of heart " = "Diseases of heart",
+  "CauseMalignant neoplasms " = "Malignant neoplasms"
+)
 
 
 modelsummary(
@@ -143,6 +141,7 @@ modelsummary(
   coef_map = coef_short_names,
   statistic = "std.error"
 )
+
 ```
 # Model
 
@@ -213,7 +212,15 @@ modelsummary::modelsummary(
   fmt = 2
 )
 ```
+Table X presents the coefficients for various causes from both the Poisson and the Negative Binomial regression models.
+The intercept represents the baseline of the model, in this case, Accidents (unintentional injuries). It shows the log count of deaths when all other causes of death are at this reference level, i.e. when no one other specific cause is considered.
 
+The coefficients for specific causes such as cerebrovascular diseases, chronic lower respiratory diseases, diseases of heart, and malignant neoplasms reflect the log-relative difference in the count of deaths relative to the reference level. Since we used a log link function, the coefficients represent effects on the log scale. Positive coefficients therefore indicate positive association between the cause and the number of deaths.
+
+Table shows that among the top five leading causes of death in Canada, diseases of the heart with a coefficient of 1.454 and malignant neoplasms with a coefficient of approximately 1.805 significantly indicates a strong positive association in both models. The coefficient for Diseases of heart is 1.454 in both the Poisson model and the negative binomial model. Exponentiating the coefficient to obtain exp(1.454) = 4.3 suggests that the expected count of deaths due to Diseases of the heart is about 3 times higher than the baseline category Accidents (unintentional injuries). Similarly exponentiating the coefficient for malignant neoplasms to obtain exp(1.805) shows the expected count of deaths is more than 5 times higher Accidents (unintentional injuries). Conversely, chronic lower respiratory diseases are associated with a slight decrease in mortality compared to Accidents (unintentional injuries) with a coefficient of -0.070 in the Poisson model, although the impact is modest about 7% less. 
+Both the Poisson model and the negative binomial model yielded similar coefficients. 
+
+This similarity suggests that both models are capturing similar relationship between the causes and the number of deaths. Comparing the Log Likelihood, The Negative Binomial model has a much higher (less negative) value (-1050.577) than the Poisson model (-16957.794). A higher log likelihood indicates a better model fit thus our analysis suggests the Negative Binomial model fits the data better. The other measures ELPD, LOOIC WAIC and RMSE all suggest that the negative binomial model fits the data better. (Appendix B)
 
 
 # Discussion
