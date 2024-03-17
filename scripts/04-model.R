@@ -9,10 +9,12 @@
 #### Workspace setup ####
 library(tidyverse)
 library(rstanarm)
+library(arrow)
 
 #### Read data ####
+cleaned_data <- read_parquet("outputs/data/cleaned_data.parquet")
 analysis_data <- cleaned_data |>
-  filter(Cause %in% canada_top_five)
+  filter(Cause %in% top_five_causes)
 
 ### Model data ####
 

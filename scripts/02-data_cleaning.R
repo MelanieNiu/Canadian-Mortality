@@ -12,8 +12,7 @@ library(janitor)
 library(dplyr)
 
 ### Clean the data ###
-raw_data <- read.csv("inputs/data/raw_data.csv")
-dim(raw_data)
+raw_data <- read_parquet("inputs/data/raw_data.parquet")
 
 # # Select the columns of interest
 col_name <- names(raw_data)
@@ -37,7 +36,6 @@ combined_data <- full_join(number_of_deaths, ranking_of_death, by = c("Year", "C
 # Filter out rows containing yearly totals
 cleaned_data <- filter(combined_data, !grepl("\\[A00-Y89\\]", Cause)) %>%
   mutate(Cause = sub("\\[.*", "", Cause))
-view(cleaned_data)
 
 #### Save data ####
-write_csv(cleaned_data, "outputs/data/cleaned_data.csv")
+write_parquet(cleaned_data, "outputs/data/cleaned_data.parquet")
