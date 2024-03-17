@@ -30,6 +30,7 @@ library(loo)
 
 ```
 
+
 # Introduction 
 
 Death is a dreaded yet unavoidable event in life. As Benjamin Franklin famously stated, "In this world, nothing can be said to be certain, except death and taxes." Population mortality has been meticulously recorded over the past century, enabling the study of epidemiological trends, such as those observed in the recent pandemic. Crucially, analyzing region-specific mortality and identifying the leading causes of death inform public health decisions and guide the effective allocation of government resources to prevent and treat diseases. The availability of vast data sources unveils patterns and valuable information regarding causes of death.
@@ -67,6 +68,7 @@ R [@citeR] was the language and environment used for the bulk of this analysis, 
 @tbl-1 highlights the top ten causes of death in 2022, with counts reflecting their frequency over 22 years. Except for COVID-19, all other causes have consistently been among the top ten annually. We selected the top five for detailed examination.
 
 
+
 ```{r}
 #| label: tbl-1
 #| tbl-cap: "Annual number of deaths for the top-five causes in 2021, since 2001, for Canada"
@@ -94,7 +96,9 @@ transformed_data %>%
 
 
 
+
 @fig-1 depicts the annual death trends for these top five causes. There has been a modest increase in deaths from Accidents (unintentional injuries) over two decades. Deaths due to Malignant Neoplasms have risen from 60,000 in the early 2000s to nearly 80,000 in 2023, while Cerebrovascular Diseases, Chronic Lower Respiratory Diseases, and Diseases of the Heart have maintained steady annual deaths at approximately 25,000, 20,000, and 60,000, respectively.
+
 
 ```{r}
 #| label: fig-1
@@ -123,6 +127,7 @@ analysis_data |>
   theme(legend.position = "none")
 
 ```
+
 
 # Model {#sec-model}
 
@@ -154,6 +159,7 @@ y_i&\sim \text{NegativeBinomial}(\mu, \phi) \quad  \\
 
 Since the residual of the number of deaths by a leading cause in a year does not follow a normal distribution, we consider using a generalized linear regression model. Since mortality occurrences are discrete events, we consider the Poisson regression model and its variant, negative binomial regression model, both of which relate explanatory variables to dependent variables representing counts of events. @tbl-2 shows that the mean, 32,603, is different from the variance, 673,243,267.  This indicates dispersion in the data, therefore negative binomial regression model may be more suitable. 
 
+
 ```{r}
 #| label: tbl-2
 #| tbl-cap: "Summary Statistics of the number of yearly deaths, by cause, in Canada"
@@ -163,6 +169,7 @@ datasummary(Death ~ Min + Mean + Max + SD + Var + N,
             fmt = 0,
             data = analysis_data)
 ```
+
 
 For model justification, we acknowledge that mortality occurrences are discrete events, making the Poisson and negative binomial regression models suitable for relating explanatory variables to event counts. The negative binomial model is particularly chosen for its capacity to handle overdispersion, a common feature in mortality data, under the assumption that the model's residuals are uncorrelated.
 
@@ -174,6 +181,7 @@ R packages rstanarm[@rstanarm] and modelsummary [@model] are used to build and a
 # Results {#sec-result}
 
 @tbl-3 presents coefficients from both Poisson and negative binomial regression models for various causes of death. The intercept, representing the baseline of Accidents (unintentional injuries), indicates the log count of deaths when no other specific cause is considered. Coefficients for causes such as cerebrovascular diseases, chronic lower respiratory diseases, diseases of the heart, and malignant neoplasms reflect log-relative differences in death counts relative to Accidents. Positive coefficients indicate a positive association with the number of deaths.
+
 
 
 ```{r}
@@ -275,9 +283,11 @@ comparison_table
 
 ```
 
+
 For instance, @tbl-3 shows that diseases of the heart have a coefficient of 1.454 in both models, suggesting the expected death count from this cause is approximately `r round(exp(1.454),2)`  times higher than from Accidents (unintentional injuries), after exponentiating the coefficient. Similarly, malignant neoplasms have a coefficient of approximately 1.805, indicating an expected count more than `r round(exp(1.805)-1, 2)` times higher than Accidents. Chronic lower respiratory diseases show a modest increase in mortality compared to Accidents, with a coefficient of 0.320 in the Poisson model and 0.322 in the negative binomial model, indicating about `r round(exp(0.320)-1,2)` times more deaths than Accidents. Lastly, Cerebrovascular diseases has a coefficient of 0.141, showing `r round(exp(0.141)-1,2)` times more death counts compare to Accidents although the impact is also modest. 
 
 @tbl-4 displayed the values of the parameters in both models.The LOOIC value (Leave-One-Out Cross-Validation Information Criterion) is useful in comparing model fitness. A lower LOOIC value suggests a model that is expected to make more accurate predictions for new, unseen data. This is because LOOIC penalizes models for having too many parameters (complexity), helping to avoid overfitting. The Poisson model has a LOOIC value of 33604.96 whereas the negative binomial model has a LOOIC value of 1787.36 much lower than the Poisson model. This indicates a better fit of the data by the negative binomial model. 
+
 
 ```{r}
 #| label: tbl-4
@@ -302,7 +312,9 @@ model_summary %>%
   )
 ```
 
+
 Both models yield similar coefficients, suggesting they capture a similar relationship between causes and death counts. The negative binomial model, with a log likelihood of -1050.577, fits the data better than the Poisson model, which has a log likelihood of -16957.794. The negative binomial model's better fit is further supported by a higher ELPD value compared to the Poisson model as shown in @tbl-5. Posterior predictive checks, trace plots, and Rhat plots assess MCMC convergence and the reliability of the Bayesian analysis, with details in @sec-model-details.
+
 
 ```{r}
 #| label: tbl-5
@@ -327,6 +339,7 @@ gt_table
 
 
 ```
+
 
 # Discussion {#sec-discussion}
 
@@ -356,6 +369,7 @@ Future studies could aim to address these weaknesses by incorporating spatial an
 
 The raw dataset was downloaded from Statistics Canada open data portal and cleaned by selecting the variables of interest "Year", "Causes of Death", "Characteristics" and "Value". The "Characteristics" variable is converted into a new variable "Death" indicating the number of death attributed to the cause and a new "Rank" variable showing the rank of the cause in a given year. @tbl-6 presents a sample of the cleaned dataset.
 
+
 ```{r}
 #| label: tbl-6
 #| tbl-cap: "A sample of the cleaned dataset of number of death attributed to causes of death in Canada, 2001-2022"
@@ -369,6 +383,7 @@ sampled_data
 
 
 
+
 # Model details {#sec-model-details}
 
 ## Posterior predictive check
@@ -376,6 +391,7 @@ sampled_data
 In @fig-ppcheck-a-1 we implement a posterior predictive check for the Poisson regression model described in @sec-result. This shows predictions generated from the posterior distribution of the model parameters (represented by the light blue lines) align reasonably well with the actual data (represented by the dark blue line) with minor misalignment. This suggests the model represent the data well.
 
 In @fig-ppcheck-a-2 we implement a posterior predictive check for the negative binomial regression model described in @sec-result This shows predictions generated from the posterior distribution of the model parameters (represented by the light blue lines) align generally well with the actual data (represented by the dark blue line). This suggests the model represents the data well. 
+
 
 
 ```{r}
@@ -396,11 +412,13 @@ pp_check(canada_death_negbinomial) +
 ```
 
 
+
 ## Diagnostics
 
 @fig-stanareyouokay-a-1 is a trace plot for the Poisson regression model. It shows a horizontal, dense band of samples without any systematic patterns, drifts, or long periods of stagnation. This pattern suggests that the chain is mixing well and sampling efficiently from the posterior distribution. This suggests the Poisson regression model is suitable.
 
 @fig-stanareyouokay-a-2 is a Rhat plot. It shows an Rhat value falling in the range 1-1.1.  This suggests that the chains have converged to the target distribution in the Poisson model.
+
 
 ```{r}
 #| echo: false
@@ -432,6 +450,7 @@ plot(canada_death_negbinomial, "trace")
 plot(canada_death_negbinomial, "rhat")
 ```
 
+
 @fig-stanareyouokay-b-1 is a trace plot for the negative binomial regression model. It also shows a horizontal, dense band of samples without abnormalities suggesting the chain is mixing well and sampling efficiently from the posterior distribution. This suggests the negative binomial model is suitable.
 
 @fig-stanareyouokay-b-2 is a Rhat plot for the negative binomial regression model. It shows an Rhat value close to 1.  This again suggests that the chains have converged to the target distribution in the negative regression model. The Rhat value is closer to 1 compared to in the Poisson model showing that the negative binomial regression model fits the data better. 
@@ -440,5 +459,6 @@ plot(canada_death_negbinomial, "rhat")
 
 
 # References
+
 
 
