@@ -4,7 +4,7 @@ subtitle: "A Bayesian Statistical Analysis Unveiling the Predominance of Maligna
 author: 
   - Yuchao Niu
 thanks: "Code and data are available at: https://github.com/MelanieNiu/Canadian-Mortality."
-date: yesterday
+date: today
 date-format: long
 abstract: "The study of mortality offers key public health insights into the fundamental causes and trends of death. This research investigates Canada's mortality trends from 2001 to 2022, employing Bayesian Poisson and negative binomial regression models to analyze data from the Canadian Vital Statistics Death Database. It reveals that malignant neoplasms and heart diseases significantly elevate mortality rates, surpassing the effects of unintentional accidents by five times and three times, respectively. Such findings highlight the critical necessity for targeted public health initiatives focusing on the prevention, early detection, and treatment of these conditions."
 format: pdf
@@ -303,6 +303,7 @@ model_summary %>%
 ```
 
 Both models yield similar coefficients, suggesting they capture a similar relationship between causes and death counts. The negative binomial model, with a log likelihood of -1050.577, fits the data better than the Poisson model, which has a log likelihood of -16957.794. The negative binomial model's better fit is further supported by a higher ELPD value compared to the Poisson model as shown in @tbl-5. Posterior predictive checks, trace plots, and Rhat plots assess MCMC convergence and the reliability of the Bayesian analysis, with details in @sec-model-details.
+\newpage
 
 ```{r}
 #| label: tbl-5
