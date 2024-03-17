@@ -6,8 +6,8 @@ This repo is for the paper "Decoding Mortality: Trends and Causes in Canada betw
 ## File Structure
 The repo is structured as : 
 
--   `inputs` contains the `data` folder containing raw data and `other` folder containing `llm` folder and `sketches` folder.
--   `outputs` folder contains the `data` folder for cleaned dataset; `model` folder containing the models constructed in the study and `paper` folder which contains the qmd document used to generate the paper,the pdf document of the paper, and the bib.txt file for bibliography.
+-   `inputs` contains the `data` folder containing raw data.
+-   `outputs` folder contains the `data` folder for cleaned dataset; `model` folder containing the models constructed and `paper` folder which contains the qmd document used to generate the paper,the pdf document of the paper, and the bib.txt file for bibliography.
 -   `scripts` contains the R scripts used to download, simulate, clean and test data. It also contains the R script used to create the model used in the analysis.
 -   `other` contains `llm`, which contain the LLM statement; and `sketches`, which contain preliminary sketches of the dataset before the actual analysis. 
 
